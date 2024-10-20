@@ -5,6 +5,7 @@ import seaborn as sns
 from sklearn.tree import DecisionTreeClassifier
 import matplotlib.pyplot as plt
 from sklearn import tree
+from sklearn.metrics import confusion_matrix
 # Load the data
 data = pd.read_csv('car_data.csv')
 
@@ -37,5 +38,9 @@ tree.plot_tree(dt, feature_names=X.columns, class_names=['0', '1'], filled=True)
 plt.show()
 
 
+# confusion matrix 
+cm = confusion_matrix(Y_test, Y_pred)
+sns.heatmap(cm, annot=True)
+plt.show()
 
 
