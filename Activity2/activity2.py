@@ -4,6 +4,7 @@ from sklearn.metrics import accuracy_score
 import seaborn as sns
 from sklearn.tree import DecisionTreeClassifier
 import matplotlib.pyplot as plt
+from sklearn import tree
 # Load the data
 data = pd.read_csv('car_data.csv')
 
@@ -20,21 +21,20 @@ X_train, X_test, Y_train, Y_test = skms.train_test_split(X, Y, test_size=0.25)
 
 # create the model
 
-dt = DecisionTreeClassifier()
+dt = DecisionTreeClassifier(max_depth=3)
 fit = dt.fit(X_train, Y_train)
 
 # predict the test set
 Y_pred = fit.predict(X_test)
 
 # print the accuracy
-print(accuracy_score(Y_test, Y_pred))
+print(f"{accuracy_score(Y_test, Y_pred)*100}%")
 
-# create a confusion matrix
-confusion_matrix = pd.crosstab(Y_test, Y_pred, rownames=['Actual'], colnames=['Predicted'])
-sns.heatmap(confusion_matrix, annot=True)
+# visualize the decision tree
+
+plt.figure(figsize=(12,12))
+tree.plot_tree(dt, feature_names=X.columns, class_names=['0', '1'], filled=True)
 plt.show()
-
-
 
 
 
