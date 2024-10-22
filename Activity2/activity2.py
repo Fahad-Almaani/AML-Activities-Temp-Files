@@ -34,7 +34,7 @@ print(f"{accuracy_score(Y_test, Y_pred)*100}%")
 # visualize the decision tree
 
 plt.figure(figsize=(12,12))
-tree.plot_tree(dt, feature_names=X.columns, class_names=['0', '1'], filled=True)
+tree.plot_tree(dt, feature_names=list(X.columns), class_names=['0', '1'], filled=True)
 plt.show()
 
 
