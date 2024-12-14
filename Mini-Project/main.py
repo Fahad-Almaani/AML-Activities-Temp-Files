@@ -20,11 +20,7 @@ target = 'Global_Sales'
 # Encode categorical variables
 data = pd.get_dummies(data, columns=['Platform', 'Genre', 'Publisher', 'Rating', 'Developer'], drop_first=True)
 
-# # Visualize the correlation heatmap before splitting data
-# plt.figure(figsize=(12, 8))
-# sns.heatmap(data.corr(), cmap='coolwarm', annot=False)
-# plt.title('Feature Correlation Heatmap')
-# plt.show()    
+
 
 # Split the data into training and testing sets
 X = data.drop([target, "Name","NA_Sales","EU_Sales"], axis=1)
