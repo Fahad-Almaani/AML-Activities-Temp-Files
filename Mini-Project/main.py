@@ -2,17 +2,17 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error, explained_variance_score
 
 # Load the dataset
-data = pd.read_csv("Video_Games_Sales.csv")
+data = pd.read_csv("Video_Games_Sales2.csv")
 
 # Handle missing values (if any)
-data.fillna(0, inplace=True)
+data.fillna(0, inplace=True)    
 
 # Target variable
 target = 'Global_Sales'
@@ -20,22 +20,42 @@ target = 'Global_Sales'
 # Encode categorical variables
 data = pd.get_dummies(data, columns=['Platform', 'Genre', 'Publisher', 'Rating', 'Developer'], drop_first=True)
 
-
-
 # Split the data into training and testing sets
-X = data.drop([target, "Name","NA_Sales","EU_Sales"], axis=1)
+X = data.drop([target, "Name", "NA_Sales", "EU_Sales"], axis=1)
 y = data[target]
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Random Forest Regressor
-rf_model = RandomForestRegressor(n_estimators=100, random_state=42)
-rf_model.fit(X_train, y_train)
-rf_predictions = rf_model.predict(X_test)
+# Hyperparameter tuning for RandomForestRegressor
+rf_param_grid = {
+    'n_estimators': [10, 20, 40],
+    'max_depth': [10, 20, 30, None],
+    'min_samples_split': [2, 5, 10],
+    'min_samples_leaf': [1, 2, 4]
+}
+rf_grid_search = GridSearchCV(RandomForestRegressor(random_state=42), rf_param_grid, cv=3, scoring='neg_mean_squared_error')
+rf_grid_search.fit(X_train, y_train)
+rf_best_model = rf_grid_search.best_estimator_
+print("\nBest Random Forest Hyperparameters:", rf_grid_search.best_params_)
 
-# XGBoost Regressor
-xgb_model = XGBRegressor(n_estimators=100, learning_rate=0.1, random_state=42)
-xgb_model.fit(X_train, y_train)
-xgb_predictions = xgb_model.predict(X_test)
+# Hyperparameter tuning for XGBRegressor
+xgb_param_grid = {
+    'n_estimators': [10, 20, 40],
+    'learning_rate': [0.01, 0.1, 0.2],
+    'max_depth': [3, 5, 7],
+    'subsample': [0.8, 1.0],
+    'colsample_bytree': [0.8, 1.0]
+}
+xgb_grid_search = GridSearchCV(XGBRegressor(random_state=42), xgb_param_grid, cv=3, scoring='neg_mean_squared_error')
+xgb_grid_search.fit(X_train, y_train)
+xgb_best_model = xgb_grid_search.best_estimator_
+print("\nBest XGBoost Hyperparameters:", xgb_grid_search.best_params_)
+
+# Train the tuned models
+rf_best_model.fit(X_train, y_train)
+rf_predictions = rf_best_model.predict(X_test)
+
+xgb_best_model.fit(X_train, y_train)
+xgb_predictions = xgb_best_model.predict(X_test)
 
 # Averaging Ensemble
 ensemble_predictions_avg = (rf_predictions + xgb_predictions) / 2
@@ -53,7 +73,7 @@ print(f"MAE: {ensemble_mae_avg}")
 print(f"Explained Variance Score: {ensemble_evs_avg}")
 
 # Stacking Ensemble
-stacked_train = np.column_stack((rf_model.predict(X_train), xgb_model.predict(X_train)))
+stacked_train = np.column_stack((rf_best_model.predict(X_train), xgb_best_model.predict(X_train)))
 stacked_test = np.column_stack((rf_predictions, xgb_predictions))
 
 stacker = LinearRegression()
@@ -80,7 +100,7 @@ print(f"Averaging Ensemble R2: {ensemble_r2_avg}")
 print(f"Stacking Ensemble R2: {stacked_r2}")
 
 # Feature Importances - Random Forest
-rf_importances = rf_model.feature_importances_
+rf_importances = rf_best_model.feature_importances_
 indices_rf = np.argsort(rf_importances)[::-1]
 features_rf = X.columns
 
@@ -90,7 +110,7 @@ plt.title('Top 10 Important Features - Random Forest')
 plt.show()
 
 # Feature Importances - XGBoost
-xgb_importances = xgb_model.feature_importances_
+xgb_importances = xgb_best_model.feature_importances_
 indices_xgb = np.argsort(xgb_importances)[::-1]
 features_xgb = X.columns
 
